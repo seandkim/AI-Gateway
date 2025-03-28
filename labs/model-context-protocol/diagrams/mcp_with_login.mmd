@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant MCP Client as MCP Client<br>(VSCode/Autogen)
+    participant APIM as APIM +<br>Crendential Manager
+    participant MCP Server as MCP Server<br>(Container Apps)
+    participant Backend as Backend<br>(Service Now)
+
+    MCP Client->>APIM: Initialize request /sse
+    APIM->>MCP Server: list tools
+    MCP Server->>MCP Client: Existing backend tools<br/> + "authorize" tool
+    MCP Client->>MCP Client: Processing logic
+    MCP Client->>MCP Server: /authorize<br>(with User's AAD token)
+    MCP Server->>MCP Server: Generate `authorization_id` <br>based on the user identity
+    MCP Server->>APIM: Check status<br>(with User's AAD token)
+    alt If authorization doesn't eixst, OAuth2 Login Flow
+        APIM->>MCP Server: "Post Login Redirect URL"
+        MCP Server->>MCP Client: Login URL
+        MCP Client->>Backend: Login
+        Backend->>MCP Client: Redirect to "Post Login Redirect URL"<br>(with Authorization Code)
+        MCP Client->>APIM: Redirect (with Authorization Code)
+        APIM->>Backend: Get token using Authorization Code
+        Backend->>APIM: Access Token + Refresh Token
+        APIM->>APIM: Securely save tokens
+        APIM->>APIM: Create authorization ACL<br>for user OID
+    end
+    APIM->>MCP Client: Connected
+    MCP Client->>MCP Server: /list_records<br>(with User's AAD token)
+    MCP Server->>MCP Server: Attach `authorization_id` as request header
+    MCP Server->>APIM: /list_records<br>(with User's AAD token)
+    APIM->>APIM: Get backend token for the `authorization_id`
+    APIM->>Backend: /list_records (with Backend token)
