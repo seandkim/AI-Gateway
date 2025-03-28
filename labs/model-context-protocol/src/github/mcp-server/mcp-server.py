@@ -29,7 +29,7 @@ idp = "github"
 @mcp.tool()
 async def authorize_github(ctx: Context) -> str:
     """Validate Credential Manager connection exists and is connected.
-    
+
     Args:
         idp: The identity provider to authorize
     Returns:
@@ -43,7 +43,7 @@ async def authorize_github(ctx: Context) -> str:
     session_id = str(id(ctx.session))
     provider_id = idp.lower()
     authorization_id = f"{provider_id}-{session_id}"
-    
+
     print(f"SessionId: {session_id}")
 
     print("Creating API Management client...")
@@ -137,13 +137,13 @@ async def get_user(ctx: Context) -> str:
 
     Returns:
         GitHub user information
-    """    
+    """
     print("Getting user info...")
 
     session_id = str(id(ctx.session))
     provider_id = idp.lower()
     authorization_id = f"{provider_id}-{session_id}"
-    
+
     print(f"SessionId: {session_id}")
 
     githubUserUrl = f"{APIM_GATEWAY_URL}/user"
@@ -159,15 +159,15 @@ async def get_user(ctx: Context) -> str:
         return f"User: {user}"
     else:
         return f"Unable to get user info. Status code: {githubResponse.status_code}, Response: {githubResponse.text}"
-    
+
 @mcp.tool()
 async def get_issues(ctx: Context, username: str, repo: str) -> str:
     """Get all issues for the specified repository for the authenticated user.
-    
+
     Args:
         username: The GitHub username
         repo: The repository name
-    
+
     Returns:
         A list of issues
     """
@@ -176,7 +176,7 @@ async def get_issues(ctx: Context, username: str, repo: str) -> str:
     session_id = str(id(ctx.session))
     provider_id = idp.lower()
     authorization_id = f"{provider_id}-{session_id}"
-    
+
     print(f"SessionId: {session_id}")
 
     githubIssuesUrl = f"{APIM_GATEWAY_URL}/repos/{username}/{repo}/issues"
@@ -203,7 +203,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
         async with sse.connect_sse(
                 request.scope,
                 request.receive,
-                request._send,  
+                request._send,
         ) as (read_stream, write_stream):
             await mcp_server.run(
                 read_stream,
@@ -220,17 +220,17 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     )
 
 
-mcp_server = mcp._mcp_server  
+mcp_server = mcp._mcp_server
 
 # Bind SSE request handling to MCP server
 starlette_app = create_starlette_app(mcp_server, debug=True)
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='Run MCP SSE-based server')
     parser.add_argument('--host', default='0.0.0.0', help='Host to bind to')
-    parser.add_argument('--port', type='int', default=8080, help='Port to listen on')
+    parser.add_argument('--port', type=int, default=8080, help='Port to listen on')
     args = parser.parse_args()
 
     uvicorn.run(starlette_app, host=args.host, port=args.port)
