@@ -4,13 +4,17 @@ sequenceDiagram
     participant MCP Server as MCP Server<br>(Container Apps)
     participant Backend as Backend<br>(Service Now)
 
-    MCP Client->>APIM: Initialize request /sse
+    MCP Client->>MCP Client: Obtain User's AAD token<br>for APIM audience
+    MCP Client->>APIM: Initialize request /sse<br/>(with User's AAD token)
+    APIM->>APIM: Validate AAD token
     APIM->>MCP Server: list tools
     MCP Server->>MCP Client: Existing backend tools<br/> + "authorize" tool
     MCP Client->>MCP Client: Processing logic
     MCP Client->>MCP Server: /authorize<br>(with User's AAD token)
+    MCP Server->>MCP Server: Validate AAD token
     MCP Server->>MCP Server: Generate `authorization_id` <br>based on the user identity
     MCP Server->>APIM: Check status<br>(with User's AAD token)
+    APIM->>APIM: Validate AAD token
     alt If authorization doesn't eixst, OAuth2 Login Flow
         APIM->>MCP Server: "Post Login Redirect URL"
         MCP Server->>MCP Client: Login URL
@@ -24,7 +28,9 @@ sequenceDiagram
     end
     APIM->>MCP Client: Connected
     MCP Client->>MCP Server: /list_records<br>(with User's AAD token)
+    MCP Server->>MCP Server: Validate AAD token
     MCP Server->>MCP Server: Attach `authorization_id` as request header
     MCP Server->>APIM: /list_records<br>(with User's AAD token)
+    APIM->>APIM: Validate AAD token
     APIM->>APIM: Get backend token for the `authorization_id`
     APIM->>Backend: /list_records (with Backend token)
